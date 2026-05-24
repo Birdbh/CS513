@@ -1,0 +1,73 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8F4F8',
+    'primaryBorderColor': '#A3C2C2',
+    'lineColor': '#4D6666',
+    'textColor': '#333333'
+  },
+  'er': {
+    'layoutDirection': 'LR'
+  }
+}}%%
+erDiagram
+    MENU {
+        int id PK
+        float name
+        string sponsor
+        string event
+        string venue
+        string place
+        string physical_description
+        string occasion
+        string notes
+        string call_number
+        float keywords
+        float language
+        string date
+        string location
+        float location_type
+        float currency
+        float currency_symbol
+        string status
+        int page_count
+        int dish_count
+    }
+    
+    MENU-PAGE {
+        int id PK
+        int menu_id FK
+        int page_number
+        int image_id
+        int full_height
+        int full_width
+        string uuid
+    }
+    
+    MENU-ITEM {
+        int id PK
+        int menu_page_id FK
+        float price
+        float high_price
+        int dish_id FK
+        string created_at
+        string updated_at
+        float xpos
+        float ypos
+    }
+    
+    DISH {
+        int id PK
+        string name
+        float description
+        int menus_appeared
+        int times_appeared
+        int first_appeared
+        int last_appeared
+        float lowest_price
+        float highest_price
+    }
+
+    MENU ||--o{ MENU-PAGE : contains
+    MENU-PAGE ||--o{ MENU-ITEM : has
+    DISH ||--o{ MENU-ITEM : appears_as

@@ -1,0 +1,22 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#E8F4F8',
+    'primaryBorderColor': '#A3C2C2',
+    'lineColor': '#4D6666',
+    'textColor': '#333333',
+    'xyChart': {
+      'plotColorPalette': '#1A3333'
+    }
+  },
+  'xyChart': {
+    'width': 1400,
+    'height': 500,
+    'plotColorPalette': '#1A3333'
+  }
+}}%%
+xychart-beta
+    title "Percentage of Missing Data in Menu.csv"
+    x-axis "Columns" ["keywords", "language", "location_type", "name", "occasion", "currency", "currency_symbol", "venue", "place", "event", "notes", "physical_desc", "sponsor", "call_number", "date"]
+    y-axis "Missing (%)" 0 --> 100
+    bar [100.00, 100.00, 100.00, 81.78, 78.39, 63.20, 63.20, 53.72, 53.70, 53.53, 39.51, 15.86, 8.90, 8.90, 3.34]
