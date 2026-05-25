@@ -28,8 +28,8 @@ The database schema is documented by the ER diagram below:
 
 \begin{figure}[htbp]
     \centering
-    \includegraphics[width=\textwidth]{er_diagram.png}
-    \caption{Entity-Relationship Diagram for the Restaurant Menu Dataset.}
+    \includegraphics[width=\textwidth, height=0.35\textheight, keepaspectratio]{er_diagram.png}
+    \caption{ER Diagram for the Restaurant Menu Dataset.}
     \label{fig:er_diagram}
 \end{figure}
 
@@ -42,15 +42,15 @@ Some text.
 
 \subsection{Target Use Case U1 --- Data Cleaning Necessary and Sufficient}  % 20 pts
 
-What are the most popular dishes by decade, and how did their prices change over time?
+What dishes appeared most frequently on menus by decade, and how did their listed prices change over time?
 
 \subsection{Zero Data Cleaning Use Case U0 --- Data Cleaning Not Necessary}  % 5 pts
 
-How many menu pages does each menu have?
+How many menus are marked complete versus under review?
 
 \subsection{Never Enough Use Case U2 --- Data Cleaning Not Sufficient}  % 5 pts
 
-Which dishes were most enjoyed or preferred by diners?
+Which dishes were most enjoyed or preferred by diners in each decade?
 
 % ─────────────────────────────────────────────
 \section{Data Quality Problems}  % 30 pts
@@ -80,7 +80,7 @@ Examples of this inconsistency for the root concept of ``anniversary'':
 \end{itemize}
 
 \subsubsection*{Data Type Variation}
-There is also distinct data type variation. For example, in the \texttt{Dish} table's \texttt{name} column, there are 47 times where the name is purely numeric, while the remaining 423,204 names are all alphabetic. Although the name truly could be "15", this causes some ambiguity regarding what is actually meant by the name.
+There is also distinct data type variation. For example, in the \texttt{Dish} table's \texttt{name} column, there are 47 times where the name is purely numeric, while the remaining 423,204 names are all alphabetic. Although the name truly could be ``15'', this causes some ambiguity regarding what is actually meant by the name.
 
 \subsection{Why Data Cleaning is Necessary for U1}  % 10 pts
 
