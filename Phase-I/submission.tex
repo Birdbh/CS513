@@ -2,17 +2,24 @@
 
 \usepackage{graphicx}
 \usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
 
 \title{CS 513 Theory \& Practice of Data Cleaning\\[0.4em]
        \large Phase-I Report\\[0.2em]
-       \normalsize Team ID: [Team-ID] $\mid$ [Optional Team Name]}
-\author{[Name 1] \texttt{netid1@illinois.edu} \and
+       \normalsize Team ID: [Team-ID] $\mid$ [TheOutterJoins]}
+\author{[Heanan Bird] \texttt{heananb2@illinois.edu} \and
         [Name 2] \texttt{netid2@illinois.edu}}
 \date{May 24, 2026}
 
 \begin{document}
 
 \maketitle
+
+\tableofcontents
+\listoffigures
+\vspace{1em}
+\hrule
+\vspace{1em}
 
 \begin{abstract}
 This Phase-I report describes the NYPL historic menus dataset, defines three use cases,
@@ -21,6 +28,7 @@ identifies observable data quality problems, and outlines the data cleaning plan
 
 % ─────────────────────────────────────────────
 \section{Description of Dataset}  % 25 pts
+\label{sec:description}
 
 \subsection{Conceptual Model / Database Schema}  % 10 pts
 
@@ -35,25 +43,30 @@ The database schema is documented by the ER diagram below:
 
 \subsection{Narrative Description}  % 15 pts
 
-Some text.
+Shown in Figure \ref{fig:er_diagram} is the NYPL historic menus dataset\footnote{The "What's on the Menu?" site was a historical milestone for NYPL and represents the first NYPL-built API. The site was a crowdsourced project to transcribe dishes and prices from the Library's collection of digitized menus to create a searchable index and set of visualization tools that show changes in cuisine and prices over time. More than 17,000 of 45,000 menus were digitized for the project. A crowdsourced geocoding component was also added in order to map various restaurant locations across New York City. Throughout the course of the project, 1,335,570 dishes were transcribed from 17,562 menus. Dataset download: \url{https://uofi.app.box.com/s/zh2hxfkq0cc6vyftw91nqa4smdpq7ybk}. Project info: \url{https://menus.nypl.org}.}, including tables for a Menu which describes the information about the menu itself, the menu page, for each menu page out of the menu, a menu item which represents an entry on a page and finally linked to a dish which could appear on many menus. The dataset covers a period of time between 1850 and 2010. The dataset is very dirty but includes information on the location, name, and language of the menu as well a breadth of information linking menus with the dishes that were/are served on those menus.
 
 % ─────────────────────────────────────────────
 \section{Use Cases}  % 30 pts
+\label{sec:use_cases}
 
 \subsection{Target Use Case U1 --- Data Cleaning Necessary and Sufficient}  % 20 pts
+\label{sec:u1}
 
 What dishes appeared most frequently on menus by decade, and how did their listed prices change over time?
 
 \subsection{Zero Data Cleaning Use Case U0 --- Data Cleaning Not Necessary}  % 5 pts
+\label{sec:u0}
 
 How many menus are marked complete versus under review?
 
 \subsection{Never Enough Use Case U2 --- Data Cleaning Not Sufficient}  % 5 pts
+\label{sec:u2}
 
 Which dishes were most enjoyed or preferred by diners in each decade?
 
 % ─────────────────────────────────────────────
 \section{Data Quality Problems}  % 30 pts
+\label{sec:dq_problems}
 
 \subsection{Obvious Data Quality Problems with Evidence}  % 20 pts
 
@@ -84,17 +97,128 @@ There is also distinct data type variation. For example, in the \texttt{Dish} ta
 
 \subsection{Why Data Cleaning is Necessary for U1}  % 10 pts
 
-Some text.
+For the primary use case (Section \ref{sec:u1}), ``What dishes appeared most frequently on menus by decade, and how did their listed prices change over time?'', we need to query menu items by the decade of their matching menu's date, count the most frequent dish names, and average their prices. However, when actually executing this query on the original dataset, a number of problematic quality issues arise:
+
+\begin{enumerate}
+    \item \textbf{Date and Decade Extraction Failures:} The \texttt{Menu.csv} dataset contains dates like \texttt{0190-00-00} or \texttt{1900-2822}, or missing dates. SQL Grouping by decade based on bad data creates nonsense decades (e.g., the ``0000s''). Solving requires removing incorrect dates or imputing values.
+    \item \textbf{Dish Name Fragmentation:} Identical dishes are named differently (e.g., ``Coffee'', ``COFFEE'', ``coffee'', ``Coffee.''). This prevents queries from accurately grouping dishes.
+    \item \textbf{Price Anomalies and Currencies:} The \texttt{MenuItem} table contains raw prices, but menus have different currencies and formats (e.g., cents versus dollars).
+\end{enumerate}
+
+The following demonstrates how use case U1 would be implemented on a cleaned dataset, extracting the top 5 most popular dishes per decade:
+
+\begin{verbatim}
+WITH MenuDecades AS (
+    SELECT 
+        id,
+        CAST(SUBSTR(date, 1, 4) AS INTEGER) / 10 * 10 AS decade
+    FROM Menu
+    WHERE date IS NOT NULL
+),
+DecadeDishStats AS (
+    SELECT 
+        md.decade,
+        d.name AS dish_name,
+        COUNT(*) AS frequency,
+        AVG(mi.price) AS avg_price
+    FROM MenuItem mi
+    JOIN MenuPage mp ON mi.menu_page_id = mp.id
+    JOIN MenuDecades md ON mp.menu_id = md.id
+    JOIN Dish d ON mi.dish_id = d.id
+    GROUP BY md.decade, d.name
+)
+SELECT decade, dish_name, frequency, avg_price
+FROM (
+    SELECT 
+        decade, 
+        dish_name, 
+        frequency, 
+        avg_price,
+        ROW_NUMBER() OVER(PARTITION BY decade ORDER BY frequency DESC) as rank
+    FROM DecadeDishStats
+)
+WHERE rank <= 5
+ORDER BY decade, rank;
+\end{verbatim}
+
+The results of this query, when run against the initial dataset, clearly highlight the problems discussed above:
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{l l r l}
+    \hline
+    \textbf{Decade} & \textbf{Dish Name} & \textbf{Frequency} & \textbf{Avg Price} \\
+    \hline
+    1870 & Roast Ham, wine sauce & 2 & NaN \\
+    1870 & Absynth & 1 & NaN \\
+    1870 & Adams Champagne Cider, pts & 1 & 0.500000 \\
+    1870 & Adams Champagne Cider, qts & 1 & 0.750000 \\
+    1870 & Almonds & 1 & NaN \\
+    \hline
+    \end{tabular}
+    \caption{Top Dishes in the 1870s (Uncleaned Data)}
+    \label{tab:1870_results}
+\end{table}
+
+As can be seen, fragmented dish representations such as ``Adams Champagne Cider, pts'' and ``Adams Champagne Cider, qts'' appear as separate entries. Furthermore, missing price values (\texttt{NaN}) propagate through the aggregations.
 
 % ─────────────────────────────────────────────
 \section{Initial Plan for Phase-II}  % 15 pts
+\label{sec:phase2}
 
 \begin{description}
-    \item[S1] \textbf{Dataset and use case review.} Some text.
-    \item[S2] \textbf{Profiling D to identify DQ problems.} Some text.
-    \item[S3] \textbf{Data cleaning proper.} Some text.
-    \item[S4] \textbf{Data quality checking.} Some text.
-    \item[S5] \textbf{Documenting and quantifying change.} Some text.
+    \item[S1] \textbf{Dataset and use case review.} Using the NYPL Dataset we will target cleansing of a subset of columns and tables to enable Use Case U1: \texttt{Menu.date}, \texttt{MenuItem.price}, \texttt{MenuItem.dish\_id}, and \texttt{Dish.name}. These columns and tables are sub-selected so that the final dataset can be used to target the U1 query.
+    
+    \item[S2] \textbf{Profiling D to identify DQ problems.} To profile the data we will employ exploratory data analysis (EDA) graphs, similar to those seen above, capturing details on the variances or values and further exploring the data quality issues already listed in Section \ref{sec:dq_problems}. For each table in the dataset, EDA will be used to identify what types of data exist, trace data variations (like spelling inconsistencies), and quantify the variance for numerical/categorical fields. Some high-level examples of these Profiling steps include:
+    
+\begin{verbatim}
+# Example 1: Identifying empty types and missing values
+missing_counts = dataframe.isnull().sum()
+
+# Example 2: Assessing mean and variance of numerical distributions
+price_stats = dataframe['price'].describe()
+
+# Example 3: Exposing root spelling variations and duplicates
+name_frequencies = dataframe['name'].value_counts().head(50)
+\end{verbatim}
+    
+    \item[S3] \textbf{Data cleaning proper.} To complete proper data cleaning, we will use Python and the Pandas library. Raw data will be loaded into a Pandas DataFrame from the source CSV files. Then pandas native transformations and regular expressions (Regex) will be applied. This process will target the fields and values necessary to extract data for use case 1 (U1), standardizing dates, normalizing dish names, and converting varying price representations. The execution of our data cleaning includes:
+
+\begin{verbatim}
+[Raw CSV Files] 
+      |
+      v
+[Pandas DataFrame Load]
+      |
+      v
+[Filter Target Columns (Date, Price, Dish Name)]
+      |
+      v
+[Regex Cleansing & Formatting]
+      |
+      v
+[Normalized Output DataFrames]
+\end{verbatim}
+    
+    \item[S4] \textbf{Data quality checking.} Once cleaning is complete, to validate the cleaning, the datasets will be loaded into a SQLite database. Individual queries that make up our final U1 use case will be applied to validate reasonable and accurate results. The results will then further be graphed using Plotly in python to visually confirm the accuracy. Furthermore, we will generate diffs between the original and cleansed columns, and rerun the same profiling steps from S2 to explicitly demonstrate the reduction in data variance.
+    
+    \item[S5] \textbf{Documenting and quantifying change.} Data transformations will be documented in a tracking table. Each column investigated will have details on what was changed, the transformation applied, and the rationale explaining the transformation. An example is shown in Table \ref{tab:mod_tracking}:
+
+\begin{table}[htbp]
+    \centering
+    \begin{tabular}{|l|l|l|p{6cm}|}
+    \hline
+    \textbf{Table} & \textbf{Column} & \textbf{Transformation Applied} & \textbf{Rationale} \\
+    \hline
+    MenuItem & price & Removed non-numeric symbols (\$) & Required for mathematical aggregation. \\
+    Menu & date & Filtered via regex & Removed placeholder dates (e.g., \texttt{0190-00-00}). \\
+    Dish & name & Converted to uppercase, stripped whitespace & Merged fragmented dish frequencies. \\
+    \hline
+    \end{tabular}
+    \caption{Modification Tracking Example}
+    \label{tab:mod_tracking}
+\end{table}
+
 \end{description}
 
 \end{document}

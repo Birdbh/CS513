@@ -1,16 +1,7 @@
-%%{init: {
-  'theme': 'base',
-  'themeVariables': {
-    'primaryColor': '#E8F4F8',
-    'primaryBorderColor': '#A3C2C2',
-    'lineColor': '#4D6666',
-    'textColor': '#333333'
-  },
-  'er': {
-    'layoutDirection': 'LR'
-  }
-}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#E8F4F8', 'primaryBorderColor': '#A3C2C2', 'lineColor': '#4D6666', 'textColor': '#333333'}}}%%
 erDiagram
+    direction LR
+
     MENU {
         int id PK
         float name
@@ -33,8 +24,8 @@ erDiagram
         int page_count
         int dish_count
     }
-    
-    MENU-PAGE {
+
+    MENU_PAGE {
         int id PK
         int menu_id FK
         int page_number
@@ -43,8 +34,8 @@ erDiagram
         int full_width
         string uuid
     }
-    
-    MENU-ITEM {
+
+    MENU_ITEM {
         int id PK
         int menu_page_id FK
         float price
@@ -55,7 +46,7 @@ erDiagram
         float xpos
         float ypos
     }
-    
+
     DISH {
         int id PK
         string name
@@ -68,6 +59,6 @@ erDiagram
         float highest_price
     }
 
-    MENU ||--o{ MENU-PAGE : contains
-    MENU-PAGE ||--o{ MENU-ITEM : has
-    DISH ||--o{ MENU-ITEM : appears_as
+    MENU ||--o{ MENU_PAGE : contains
+    MENU_PAGE ||--o{ MENU_ITEM : has
+    DISH ||--o{ MENU_ITEM : appears_as
