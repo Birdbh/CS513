@@ -4,7 +4,7 @@ erDiagram
 
     MENU {
         int id PK
-        float name
+        string name
         string sponsor
         string event
         string venue
@@ -13,13 +13,13 @@ erDiagram
         string occasion
         string notes
         string call_number
-        float keywords
-        float language
+        string keywords
+        string language
         string date
         string location
-        float location_type
-        float currency
-        float currency_symbol
+        string location_type
+        string currency
+        string currency_symbol
         string status
         int page_count
         int dish_count
@@ -50,7 +50,7 @@ erDiagram
     DISH {
         int id PK
         string name
-        float description
+        string description
         int menus_appeared
         int times_appeared
         int first_appeared
